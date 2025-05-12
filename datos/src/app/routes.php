@@ -12,11 +12,11 @@
     
 
     $app->group('/api',function(RouteCollectorProxy $api){
-        $api->group('/producto',function(RouteCollectorProxy $producto){
+        $api->group('/artefacto',function(RouteCollectorProxy $producto){
             $producto->get('/read[/{id}]', Artefacto::class . ':read');
             $producto->post('', Artefacto::class . ':create');
             $producto->put('/{id}', Artefacto::class . ':update');
             $producto->delete('/{id}', Artefacto::class . ':delete');
-            $producto->get('/filtrar', Artefacto::class . ':filtrar');
+            $producto->get('/filtrar/{pag}/{lim}', Artefacto::class . ':filtrar');
         });
     });

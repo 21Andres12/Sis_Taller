@@ -62,7 +62,7 @@ services:
       - ./negocio/src:/var/www/html/src
       - ./negocio/public:/var/www/html/public
     depends_on: 
-      - db
+      - webdatos
     networks:
        dto-red:
         ipv4_address: "192.168.0.13"

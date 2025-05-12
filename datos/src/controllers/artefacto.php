@@ -16,7 +16,7 @@
 
         public function read(Request $request, Response $response, $args){
             $sql= "SELECT * FROM artefacto ";
-
+            
            // $sql= "SELECT * FROM productos WHERE id = :id ;";
 
            
@@ -52,75 +52,16 @@
         }
 
         public function create(Request $request, Response $response, $args){
-            $body = json_decode($request->getBody());
-        
-            $campos = "";
-            foreach ($body as $key => $value) {
-                $campos .= $key . ', ';
-            }
-            $campos = substr($campos, 0, -2);
-        
-            $params = "";
-            foreach ($body as $key => $value) {
-                $params .= ":" . $key . ', ';
-            }
-            $params = substr($params, 0, -2);
-        
-            $sql = "INSERT INTO artefacto ($campos) VALUES ($params);";
-        #cine
-            $con = $this->container->get('base_datos');
-            $con->beginTransaction();
-            $query = $con->prepare($sql);
-        
-            foreach ($body as $key => $value) {
-                $TIPO = gettype($value) === "integer" ? PDO::PARAM_INT : PDO::PARAM_STR;
-                $value = filter_var($value, FILTER_SANITIZE_SPECIAL_CHARS);
-                $query->bindValue(':' . $key, $value, $TIPO);
-            }
-        
-            try {
-                $query->execute();
-                $con->commit();
-                $status = 201;
-            } catch (\Exception $e) {
-                $status = $e->getCode() == 23000 ? 409 : 500;
-                $con->rollBack();
-            }
-        
-            $query = null;
-            $con = null;
-        
-            return $response->withStatus($status);
-        }
-        
-        public function update(Request $request, Response $response, $args){
-            
-            $body= json_decode($request->getBody());
+          $body= json_decode($request->getBody());
 
-           
+            $sql = "SELECT nuevoArtefacto(:idCliente, :serie, :modelo, :marca, :categoria, :descripcion);";
 
-            $campos="";
-            $id = $args["id"];
-           
-            
-           if(isset($body->id)){
-                unset($body->id);
-            }
-            if(isset($body->idcliente)){
-                unset($body->idCliente);
-            }
-            
- 
-            $sql = "UPDATE artefacto SET ";
-            foreach($body as $key => $value){
-
-            $sql .="$key = :$key, ";
-            }
-            $sql= substr($sql, 0, -2);
-            $sql .=" WHERE id = :id;";
            
 
             $con=  $this->container->get('base_datos');
+
+            $con->beginTransaction();
+
             $query = $con->prepare($sql);
 
 
@@ -133,13 +74,78 @@
 
                 $query->bindValue($key, $value, $TIPO);
             };
-            $query->bindValue('id', $id, PDO::PARAM_INT);
 
-            $query->execute();
-            $status= $query->rowCount() > 0 ? 200 : 204;
+            try{
+                $query->execute();
+                $con->commit();
+                $res= $query->fetch(PDO::FETCH_NUM)[0];
+
+                $status = match($res) {
+                0 => 201,
+                1 => 409,
+                2 => 428
+               };
+
+            }catch(PDOException $e){
+            $status= 500;
+            $con->rollback();    
+            }
+           
 
             $query=null;
             $con=null;
+
+
+            return $response ->withStatus($status);
+        }
+        
+        public function update(Request $request, Response $response, $args){
+ 
+           
+            $body= json_decode($request->getBody());
+
+            $sql = "SELECT editarArtefacto(:id, :serie, :modelo, :marca, :categoria, :descripcion);";
+
+           
+
+            $con=  $this->container->get('base_datos');
+
+            $con->beginTransaction();
+
+            $query = $con->prepare($sql);
+
+            $value=filter_var($args['id'], FILTER_SANITIZE_SPECIAL_CHARS);
+
+            $query->bindValue("id", $value, PDO::PARAM_INT);
+
+            
+            foreach($body as $key => $value){
+                $TIPO= gettype($value)=="integer" ? PDO::PARAM_INT : PDO::PARAM_STR;
+
+                $value=filter_var($value, FILTER_SANITIZE_SPECIAL_CHARS);
+
+                $query->bindValue($key, $value, $TIPO);
+            };
+
+            try{
+                $query->execute();
+                $con->commit();
+                $res= $query->fetch(PDO::FETCH_NUM)[0];
+
+                $status = match($res) {
+                0 => 404,
+                1 => 200
+               };
+
+            }catch(PDOException $e){
+            $status= 500;
+            $con->rollback();    
+            }
+           
+
+            $query=null;
+            $con=null;
+
 
 
             return $response ->withStatus($status);
@@ -148,7 +154,7 @@
         
         public function delete(Request $request, Response $response, $args){
             
-            $sql =" DELETE FROM artefacto WHERE id = :id;";
+            $sql ="SELECT eliminarArtefacto(:id);";
             
             $con=  $this->container->get('base_datos');
 
@@ -156,8 +162,10 @@
 
             $query->bindValue("id", $args["id"], PDO::PARAM_INT);
             $query->execute();
-            
-            $status= $query->rowCount()> 0 ? 200 : 404;
+            $res= $query->fetch(PDO::FETCH_NUM)[0];
+
+
+            $status= $res > 0 ? 200 : 404;
 
             $query=null;
             $con=null;
@@ -170,23 +178,21 @@
         public function filtrar(Request $request, Response $response, $args){
            
             $datos= $request->getQueryParams();
-          
-            $sql= "SELECT * FROM artefacto WHERE ";
+            
+            $filtro ="%";
+
             foreach($datos as $key => $value){
-                $sql .="$key LIKE :$key AND ";
+                $filtro .="$value%&%";
             };
-            $sql= rtrim($sql, ' AND ') . ";";
-            
-            
-            //$sql .=" LIMIT 0,5;";
+            $filtro= substr($filtro, 0, -1);
+            $sql = "CALL filtrarArtefacto('$filtro', {$args['pag']},{$args['lim']});";
+           
+            // %serie%&%modelo%&%marca%&%categoria%&
+           
             
             $con=  $this->container->get('base_datos');
             $query = $con->prepare($sql);
 
-            foreach($datos as $key => $value){
-                $query->bindValue(":$key", "%$value%", PDO::PARAM_STR);
-
-            };
 
 
                 $query->execute();
