@@ -11,6 +11,6 @@ $app->group('/api',function(RouteCollectorProxy $api){
         $producto->post('', Artefacto::class . ':create');
         $producto->put('/{id}', Artefacto::class . ':update');
         $producto->delete('/{id}', Artefacto::class . ':delete');
-        $producto->get('/filtrar', Artefacto::class . ':filtrar');
+        $producto->get('/filtrar/{pag}/{lim}', Artefacto::class . ':filtrar');
     });
 });

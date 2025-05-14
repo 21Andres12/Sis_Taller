@@ -25,7 +25,7 @@
                 
             }
 
-            $sql .=" LIMIT 0,5;";
+            $sql .=" LIMIT 0,10;";
             $con=  $this->container->get('base_datos');
             $query = $con->prepare($sql);
 
