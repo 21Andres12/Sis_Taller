@@ -48,7 +48,8 @@ CREATE FUNCTION nuevoCliente (
     RETURNS INT(1) 
 begin
     declare _cant int;
-    select count(id) into _cant from cliente where idCliente = _idCliente;
+    select count(id) into _cant from cliente where idCliente = _idCliente or correo = _correo;
+ 
     if _cant < 1 then
         insert into cliente(idCliente, nombre, apellido1, apellido2, telefono, 
             celular, direccion, correo) 

@@ -41,7 +41,9 @@ CREATE TABLE cliente (
   direccion Varchar (255) COLLATE utf8_spanish_ci,
   correo Varchar (100) NOT NULL,
   fechaIngreso Datetime DEFAULT now(),
-  PRIMARY KEY (id)
+  PRIMARY KEY (id),
+  UNIQUE KEY idx_Cliente (idCliente),
+  UNIQUE KEY idx_Correo (correo)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci;
 
 DROP TABLE IF EXISTS usuario;

@@ -19,4 +19,16 @@
             $producto->delete('/{id}', Artefacto::class . ':delete');
             $producto->get('/filtrar/{pag}/{lim}', Artefacto::class . ':filtrar');
         });
+  
+
+
+    
+    $api->group('/cliente',function(RouteCollectorProxy $endpoint){
+            $endpoint->get('/read[/{id}]', Cliente::class . ':read');
+            $endpoint->post('', Cliente::class . ':create');
+            $endpoint->put('/{id}', Cliente::class . ':update');
+            $endpoint->delete('/{id}', Cliente::class . ':delete');
+            $endpoint->get('/filtrar/{pag}/{lim}', Cliente::class . ':filtrar');
+        });
+   
     });
