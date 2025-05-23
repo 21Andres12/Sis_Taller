@@ -71,10 +71,13 @@ CREATE FUNCTION editarCliente (
     _direccion Varchar (255),
     _correo Varchar (100)
     ) RETURNS INT(1) 
+  
 begin
-    declare _cant int;
-    select count(id) into _cant from cliente where id = _id;
-    if _cant > 0 then
+   -- declare _cant int;
+   declare no_encontrado int default 0;
+   if not exists (select 1 from cliente where id = _id) then
+       set no_encontrado = 1;
+       else
         update cliente set
             idCliente = _idCliente,
             nombre = _nombre,
@@ -86,7 +89,7 @@ begin
             correo = _correo
         where id = _id;
     end if;
-    return _cant;
+    return no_encontrado;
 end$$
 
 DROP FUNCTION IF EXISTS eliminarCliente$$
@@ -107,6 +110,21 @@ begin
         end if;
     end if;
     return _resp;
+end$$
+
+
+DROP TRIGGER IF EXISTS actualizar_cliente $$
+create TRIGGER actualizar_cliente after update on cliente for each row
+begin
+    update usuario set idUsuario = new.idCliente,
+    correo = new.correo   
+     where idUsuario = old.idCliente;
+     end$$
+
+ DROP TRIGGER IF EXISTS eliminar_cliente$$
+    create TRIGGER eliminar_cliente after delete on cliente for each row
+begin
+    delete from usuario where idUsuario = old.idCliente;
 end$$
 
 DELIMITER ;
